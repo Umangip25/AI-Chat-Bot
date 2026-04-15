@@ -1,22 +1,23 @@
 import { create } from "zustand";
 
-// Define the shape of a message in our chat
 export type Message = {
   role: "user" | "assistant";
   content: string;
 };
 
-// Define the shape of our chat store
 type ChatStore = {
   messages: Message[];
+  currentChatId: number | undefined;
   addMessage: (msg: Message) => void;
   setMessages: (msgs: Message[]) => void;
+  setCurrentChatId: (id: number | undefined) => void;
 };
 
-// Create the chat store using Zustand
 export const useChatStore = create<ChatStore>((set) => ({
   messages: [],
+  currentChatId: undefined,
   addMessage: (msg) =>
     set((state) => ({ messages: [...state.messages, msg] })),
   setMessages: (msgs) => set({ messages: msgs }),
+  setCurrentChatId: (id) => set({ currentChatId: id }),
 }));
