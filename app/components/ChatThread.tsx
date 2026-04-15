@@ -17,56 +17,96 @@ export default function ChatThread({ messages, streamingMessage, isLoading }: Pr
   }, [messages, streamingMessage]);
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div
+      className="h-full overflow-y-auto p-4 space-y-4"
+      style={{ background: "var(--bg-primary)" }}
+    >
       {messages.length === 0 && !streamingMessage ? (
-        <div className="flex items-center justify-center h-full text-gray-400">
-          Start a conversation...
+        <div
+          className="flex items-center justify-center h-full text-sm"
+          style={{ color: "var(--text-muted)" }}
+        >
+          Start a conversation…
         </div>
       ) : (
         <>
           {messages.map((m, i) => (
             <div
               key={i}
-              className={`flex ${
-                m.role === "user" ? "justify-end" : "justify-start"
-              }`}
+              className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
             >
               <div
-                className={`max-w-[70%] rounded-2xl px-4 py-2 text-sm ${
+                className="max-w-[70%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed"
+                style={
                   m.role === "user"
-                    ? "bg-blue-500 text-white rounded-br-none"
-                    : "bg-gray-100 text-gray-800 rounded-bl-none"
-                }`}
+                    ? {
+                        background: "var(--bubble-user)",
+                        color: "var(--bubble-user-text)",
+                        borderBottomRightRadius: "4px",
+                      }
+                    : {
+                        background: "var(--bubble-ai)",
+                        color: "var(--bubble-ai-text)",
+                        borderBottomLeftRadius: "4px",
+                        border: "1px solid var(--border)",
+                      }
+                }
               >
                 {m.content}
               </div>
             </div>
           ))}
 
-          {/* Thinking indicator — shown before streaming starts */}
+          {/* Thinking dots */}
           {isLoading && !streamingMessage && (
             <div className="flex justify-start">
-              <div className="max-w-[70%] rounded-2xl px-4 py-2 text-sm bg-gray-100 text-gray-800 rounded-bl-none">
-                <span className="flex gap-1 items-center h-4">
-                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:0ms]" />
-                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:150ms]" />
-                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:300ms]" />
+              <div
+                className="rounded-2xl px-4 py-3"
+                style={{
+                  background: "var(--bubble-ai)",
+                  border: "1px solid var(--border)",
+                  borderBottomLeftRadius: "4px",
+                }}
+              >
+                <span className="flex gap-1.5 items-center h-4">
+                  {[0, 150, 300].map((delay) => (
+                    <span
+                      key={delay}
+                      className="w-2 h-2 rounded-full animate-bounce"
+                      style={{
+                        background: "var(--text-secondary)",
+                        animationDelay: `${delay}ms`,
+                      }}
+                    />
+                  ))}
                 </span>
               </div>
             </div>
           )}
 
-          {/* Streaming message with blinking cursor */}
+          {/* Streaming message */}
           {streamingMessage && (
             <div className="flex justify-start">
-              <div className="max-w-[70%] rounded-2xl px-4 py-2 text-sm bg-gray-100 text-gray-800 rounded-bl-none">
+              <div
+                className="max-w-[70%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed"
+                style={{
+                  background: "var(--bubble-ai)",
+                  color: "var(--bubble-ai-text)",
+                  border: "1px solid var(--border)",
+                  borderBottomLeftRadius: "4px",
+                }}
+              >
                 {streamingMessage}
-                <span className="inline-block w-1 h-3 ml-1 bg-gray-400 animate-pulse" />
+                <span
+                  className="inline-block w-0.5 h-3.5 ml-1 rounded-full animate-pulse align-middle"
+                  style={{ background: "var(--accent)" }}
+                />
               </div>
             </div>
           )}
         </>
       )}
+
       <div ref={bottomRef} />
     </div>
   );

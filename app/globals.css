@@ -1,26 +1,123 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Theme Variables */
+/* Default = Dark */
+:root,
+[data-theme="dark"] {
+  --bg-primary: #0f1117;
+  --bg-secondary: #1a1d27;
+  --bg-sidebar: #13151f;
+  --bg-input: #1e2130;
+
+  --border: #2a2d3e;
+
+  --text-primary: #e8eaf0;
+  --text-secondary: #6b7280;
+  --text-muted: #3d4251;
+
+  --bubble-user: #3b5bdb;
+  --bubble-user-text: #ffffff;
+  --bubble-ai: #1e2130;
+  --bubble-ai-text: #d1d5db;
+
+  --accent: #3b5bdb;
+  --accent-hover: #2f4ac4;
+
+  --danger: #ef4444;
+  --danger-hover: #dc2626;
+
+  --topbar-bg: #0f1117;
+  --topbar-border: #2a2d3e;
+
+  --scrollbar-thumb: #2a2d3e;
+  --scrollbar-track: transparent;
+}
+
+/* Light Theme */
+[data-theme="light"] {
+  --bg-primary: #f5f6fa;
+  --bg-secondary: #ffffff;
+
+  --bg-sidebar: #13151f;
+
+  --bg-input: #ffffff;
+  --border: #e2e4eb;
+
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --text-muted: #c4c9d4;
+
+  --bubble-user: #3b5bdb;
+  --bubble-user-text: #ffffff;
+  --bubble-ai: #ffffff;
+  --bubble-ai-text: #1f2937;
+
+  --accent: #3b5bdb;
+  --accent-hover: #2f4ac4;
+
+  --danger: #ef4444;
+  --danger-hover: #dc2626;
+
+  --topbar-bg: #ffffff;
+  --topbar-border: #e2e4eb;
+
+  --scrollbar-thumb: #d1d5db;
+  --scrollbar-track: transparent;
+}
+
+html,
+body {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg-primary);
+  color: var(--text-primary);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Transitions */
+
+*,
+*::before,
+*::after {
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.15s ease;
+}
+
+/* Scrollbar */
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 999px;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
