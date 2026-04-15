@@ -21,29 +21,48 @@ export default function Home() {
   }, [setMessages]);
 
   const sendMessage = async () => {
-    const userMessage: Message = { role: "user", content: input };
-    addMessage(userMessage);
+  const userMessage: Message = { role: "user", content: input };
 
-    // Send message to backend API
-    const res = await fetch("/api/chat", {
+  const updatedMessages = [...messages, userMessage];
+  addMessage(userMessage);
+
+  const res = await fetch("/api/chat", {
+    method: "POST",
+    body: JSON.stringify({
+      messages: updatedMessages,
+    }),
+  });
+
+  const data = await res.json();
+
+  addMessage({ role: "assistant", content: data.reply as string });
+
+  const finalMessages: Message[] = [
+    ...updatedMessages,
+    { role: "assistant", content: data.reply as string },
+  ];
+
+  let title = "New Chat";
+
+  if (messages.length === 0) {
+    const titleRes = await fetch("/api/title", {
       method: "POST",
       body: JSON.stringify({
-        messages: [...messages, userMessage],
+        message: userMessage.content,
       }),
     });
 
-    const data = await res.json();
+    const titleData = await titleRes.json();
+    title = titleData.title;
+  }
 
-    // Add assistant's reply to chat
-    addMessage({ role: "assistant", content: data.reply });
-    
-    // Save chat to IndexedDB
-    await db.chats.put({
-      messages: [...messages, userMessage, { role: "assistant", content: data.reply }],
-    });
-    
-    setInput("");
-  };
+  await db.chats.put({
+    title,
+    messages: finalMessages,
+  });
+
+  setInput("");
+};
 
   // Load chat history from IndexedDB on component mount
   return (
@@ -51,7 +70,7 @@ export default function Home() {
       <div className="h-[400px] overflow-y-auto border p-4 mb-4">
         {messages.map((m, i) => (
           <div key={i}>
-            <b>{m.role}:</b> {m.content}
+           <b>{m.role === "user" ? "You" : "AI"}:</b> {m.content}
           </div>
         ))}
       </div>
@@ -62,7 +81,10 @@ export default function Home() {
         onChange={(e) => setInput(e.target.value)}
       />
 
-      <button onClick={sendMessage} className="mt-2 bg-blue-500 text-white px-4 py-2">
+      <button
+        onClick={sendMessage}
+        className="mt-2 bg-blue-500 text-white px-4 py-2"
+      >
         Send
       </button>
     </div>

@@ -1,10 +1,15 @@
 import { openai } from "../../lib/openai";
 
-// API route handler for POST requests to /api/title
 export async function POST(req: Request) {
   const { message } = await req.json();
 
-  // Create a chat completion using the OpenAI API
+  if (!message) {
+    return Response.json(
+      { error: "Message is required" },
+      { status: 400 }
+    );
+  }
+
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [
@@ -15,8 +20,7 @@ export async function POST(req: Request) {
     ],
   });
 
-  // Return the generated title as a JSON response
   return Response.json({
-    title: completion.choices[0].message.content,
+    title: completion.choices[0]?.message?.content ?? "Untitled Chat",
   });
 }
