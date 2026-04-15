@@ -1,17 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useChatStore } from "./lib/store";
 import type { Message } from "./lib/store";
+import { db } from "./lib/db";
 
 export default function Home() {
-  const { messages, addMessage } = useChatStore();
+  const { messages, addMessage, setMessages } = useChatStore();
   const [input, setInput] = useState("");
+
+  // Load chat history from IndexedDB on component mount
+  useEffect(() => {
+    const load = async () => {
+      const allChats = await db.chats.toArray();
+      if (allChats.length > 0) {
+        setMessages(allChats[0].messages);
+      }
+    };
+    load();
+  }, [setMessages]);
 
   const sendMessage = async () => {
     const userMessage: Message = { role: "user", content: input };
     addMessage(userMessage);
 
+    // Send message to backend API
     const res = await fetch("/api/chat", {
       method: "POST",
       body: JSON.stringify({
@@ -21,10 +34,18 @@ export default function Home() {
 
     const data = await res.json();
 
+    // Add assistant's reply to chat
     addMessage({ role: "assistant", content: data.reply });
+    
+    // Save chat to IndexedDB
+    await db.chats.put({
+      messages: [...messages, userMessage, { role: "assistant", content: data.reply }],
+    });
+    
     setInput("");
   };
 
+  // Load chat history from IndexedDB on component mount
   return (
     <div className="p-6">
       <div className="h-[400px] overflow-y-auto border p-4 mb-4">
