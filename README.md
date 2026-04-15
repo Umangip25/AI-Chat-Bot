@@ -1,34 +1,41 @@
-Here’s a clean, professional `README.md` based on everything you’ve built so far. You can directly paste this into your project root.
-
----
-
 # 🤖 AI Chat Bot (Next.js + OpenAI)
 
 A full-stack AI chat application built with **Next.js App Router**, **OpenAI GPT-4o-mini**, **Zustand**, and **IndexedDB (Dexie)**.
-It supports multi-chat sessions, streaming responses, chat persistence, and AI-generated titles.
+
+It supports real-time streaming chat, multi-session conversations, persistent storage, and built-in AI tools like weather, jokes, math, coding help, and general assistance.
 
 ---
 
 ## ✨ Features
 
-* 💬 Real-time AI chat using OpenAI
-* ⚡ Streaming responses (word-by-word output)
+* 💬 Real-time AI chat with OpenAI
+* ⚡ Streaming responses (token-by-token UI updates)
 * 🧠 AI-generated chat titles
-* 💾 Persistent chat storage using IndexedDB (Dexie)
+* 💾 Persistent chat history using IndexedDB (Dexie)
 * 📂 Multi-chat sidebar (create, switch, delete chats)
 * 🗑️ Delete chat with confirmation modal
-* ⚛️ Zustand for global state management
-* 🚀 Next.js App Router architecture
+* 🔗 Share chat via copy-to-clipboard
+* 🌗 Light & Dark theme support
+* 🎨 Theme toggle with persistent localStorage sync
+* 👤 Online user indicator in sidebar
+* 📌 Non-collapsible sidebar layout
+* 🤖 Built-in intent handling:
+
+  * Weather assistant 🌤️
+  * Joke generator 😂
+  * Math solver ➗
+  * Code assistant 💻
+  * Basic life advice 💡
 
 ---
 
 ## 🛠️ Tech Stack
 
-* **Frontend:** Next.js (React, TypeScript)
+* **Frontend:** Next.js (App Router), React, TypeScript
 * **State Management:** Zustand
 * **AI Integration:** OpenAI API (`gpt-4o-mini`)
-* **Database (Client-side):** IndexedDB via Dexie.js
-* **Styling:** Tailwind CSS
+* **Database (Client-side):** IndexedDB (Dexie.js)
+* **Styling:** Tailwind CSS + CSS variables
 * **Streaming:** OpenAI streaming responses
 
 ---
@@ -38,18 +45,23 @@ It supports multi-chat sessions, streaming responses, chat persistence, and AI-g
 ```
 app/
  ├── api/
- │    ├── chat/route.ts        # Chat completion API
- │    └── title/route.ts       # Chat title generator API
+ │    ├── chat/route.ts        # Main chat API (intent handling + OpenAI)
+ │    └── title/route.ts       # Chat title generator
+ │
  ├── components/
  │    ├── ChatThread.tsx       # Chat UI renderer
- │    ├── Sidebar.tsx          # Chat history + delete modal
+ │    ├── Sidebar.tsx          # Chat history + actions
+ │
  ├── page.tsx                  # Main chat page
  ├── layout.tsx                # Root layout
 
 lib/
  ├── db.ts                     # Dexie IndexedDB setup
- ├── store.ts                  # Zustand global store
+ ├── store.ts                  # Zustand global state
  ├── openai.ts                 # OpenAI client config
+
+context/
+ ├── ThemeProvider.tsx         # Theme state + localStorage sync
 ```
 
 ---
@@ -79,6 +91,7 @@ Create a `.env.local` file:
 
 ```bash
 OPENAI_API_KEY=your_openai_api_key
+WEATHER_API_KEY=your_openweathermap_key
 ```
 
 ---
@@ -97,43 +110,43 @@ http://localhost:3000
 
 ---
 
-## 💡 How It Works
+## 🧠 How It Works
 
-### 1. Chat Flow
+### Chat Flow
 
-* User sends message
-* Message stored in Zustand state
-* API `/api/chat` sends request to OpenAI
-* Response streamed back in real-time
-* UI updates word-by-word
+1. User sends a message
+2. Intent is detected (weather, joke, math, code, advice, general)
+3. If weather → external API call (OpenWeatherMap)
+4. Otherwise → OpenAI handles response
+5. Response streams back in real-time
 
 ---
 
-### 2. Chat Persistence
+### Chat Persistence
 
 * Chats stored in IndexedDB (Dexie)
-* Each chat has:
+* Each chat contains:
 
-  * `id`
-  * `title`
-  * `messages[]`
-
----
-
-### 3. Multi-chat System
-
-* Sidebar loads all saved chats
-* Click to switch between conversations
-* New chats automatically created
-* Delete chat via confirmation modal
+  * id
+  * title
+  * messages array
 
 ---
 
-### 4. AI Title Generation
+### Multi-Chat System
 
-* First message triggers `/api/title`
-* AI generates short chat title
-* Stored with chat session
+* Sidebar loads saved chats
+* Switch between conversations instantly
+* Create new chat sessions dynamically
+* Delete unwanted chats
+
+---
+
+### Theme System
+
+* Light / Dark mode toggle
+* Theme stored in `localStorage`
+* CSS variables control entire UI
 
 ---
 
@@ -141,43 +154,27 @@ http://localhost:3000
 
 This project demonstrates:
 
-* Real-world AI integration
-* Streaming APIs in React
-* Client-side database usage
-* Global state management
-* Scalable chat architecture
-* Clean UI/UX patterns
+* Real-world AI integration with routing logic
+* Streaming responses in React UI
+* Local-first data persistence (IndexedDB)
+* Clean state management with Zustand
+* Theme architecture using CSS variables
+* Modular chat system design
 
 ---
 
 ## 🗑️ Future Improvements
 
-* Server-side database (PostgreSQL / Prisma)
-* Auth (login per user)
-* Chat sharing
-* File/image support
+* Backend database (PostgreSQL + Prisma)
+* User authentication (Auth.js / Clerk)
+* Chat sharing via link
+* File + image support
 * Voice input/output
-* AI tools (weather, jokes, etc.)
-
----
-
-## 📸 UI Preview
-
-> Add screenshots here later (optional)
+* Advanced AI tools system (plugins architecture)
 
 ---
 
 ## 👩‍💻 Author
 
-Built by **Umangi Prajapati**
+Built by Umangi Prajapati
 
----
-
-If you want next upgrade, I can help you:
-
-👉 turn this into a **portfolio-ready production app**
-👉 deploy it on **Vercel**
-👉 add **login + cloud DB (Supabase / Firebase)**
-👉 or add **AI tools (weather, jokes, career assistant, etc.)**
-
-Just tell me 👍
