@@ -1,7 +1,7 @@
 import { openai } from "../../lib/openai";
 import { streamText } from "ai";
 
-// Simple keyword-based intent detection. In a real app, you'd want something more robust.
+// Simple intent detection based on keywords
 function detectIntent(text: string) {
   const t = text.toLowerCase();
   if (t.includes("weather")) return "weather";
@@ -13,10 +13,10 @@ function detectIntent(text: string) {
   return "general";
 }
 
-// Extract city name from weather-related queries using regex and heuristics
+// Extract city name for weather intent using regex and cleanup
 function extractCity(text: string): string | null {
   const match = text.match(
-    /weather\s+(?:in|at|for)\s+([a-zA-Z\s,]+?)(?:\?|$|\s+right now|\s+currently|\s+now)/i,
+    /weather\s+(?:in|at|for)\s+([a-zA-Z\s,]+?)(?:\?|$|\s+right now|\s+currently|\s+now)/i
   );
   if (match) return match[1].trim();
 
@@ -39,12 +39,11 @@ async function getWeather(city: string) {
     return null;
   }
 
-  // Basic input sanitization to prevent abuse
   try {
     const res = await fetch(
       `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(
-        city.trim(),
-      )}&units=metric&appid=${apiKey}`,
+        city.trim()
+      )}&units=metric&appid=${apiKey}`
     );
 
     if (!res.ok) {
@@ -55,6 +54,7 @@ async function getWeather(city: string) {
 
     const data = await res.json();
 
+    // Map API response to our weather format
     return {
       temp: Math.round(data.main.temp),
       feels_like: Math.round(data.main.feels_like),
@@ -69,14 +69,15 @@ async function getWeather(city: string) {
   }
 }
 
-// Main API route handler for chat messages
 export async function POST(req: Request) {
   const { messages } = await req.json();
 
-  const lastMessage = messages[messages.length - 1]?.content?.toString() || "";
+  const lastMessage =
+    messages[messages.length - 1]?.content?.toString() || "";
+
+  // Detect intent and handle accordingly
   const intent = detectIntent(lastMessage);
 
-  // Handle weather intent separately with API integration
   if (intent === "weather") {
     const city = extractCity(lastMessage);
 
@@ -88,17 +89,16 @@ export async function POST(req: Request) {
           { role: "user", content: lastMessage },
           {
             role: "assistant",
-            content: "Please tell me which city you'd like the weather for!",
+            content: "Tell me the city you want weather for.",
           },
         ],
       });
+
       return result.toTextStreamResponse();
     }
 
-    // Fetch weather data
     const weather = await getWeather(city);
 
-    // If we couldn't get weather data, respond with a polite message
     if (!weather) {
       const result = await streamText({
         model: openai("gpt-4o-mini"),
@@ -106,40 +106,29 @@ export async function POST(req: Request) {
           { role: "system", content: "You are a helpful weather assistant." },
           {
             role: "user",
-            content: `I couldn't get weather data for "${city}". Tell the user politely and suggest they try a full city name like "San Jose" or "New York".`,
+            content: `Couldn't fetch weather for "${city}". Ask user to try a full city name.`,
           },
         ],
       });
+
       return result.toTextStreamResponse();
     }
+    // Format the weather data into a user-friendly response
+    const formattedContent = [
+      `🌤️ ${weather.city} Weather`,
+      `🌡️ Temperature: ${weather.temp}°C`,
+      `🤔 Feels Like: ${weather.feels_like}°C`,
+      `☁️ Condition: ${weather.description}`,
+      `💧 Humidity: ${weather.humidity}%`,
+      `💨 Wind: ${weather.wind} m/s`,
+      ``,
+      `Enjoy your day! ☀️`,
+    ].join("\n");
 
-    const formattedContent = `🌍 City: ${weather.city}
-                              🌡 Temperature: ${weather.temp}°C
-                              🤔 Feels like: ${weather.feels_like}°C
-                              ☁️ Condition: ${weather.description}
-                              💧 Humidity: ${weather.humidity}%
-                              💨 Wind: ${weather.wind} m/s`;
-
-    // Format and return the weather data in a user-friendly way using the AI model
-    const result = await streamText({
-      model: openai("gpt-4o-mini"),
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a weather assistant. Format weather data clearly with emojis. Be concise and friendly.",
-        },
-        {
-          role: "user",
-          content: formattedContent,
-        },
-      ],
-    });
-
-    return result.toTextStreamResponse();
+    // Return the formatted weather response as a stream
+    return new Response(formattedContent);
   }
 
-  // For other intents, adjust the system prompt to guide the AI's response style
   let systemPrompt = "You are a helpful assistant.";
 
   if (intent === "joke") {
@@ -154,15 +143,18 @@ export async function POST(req: Request) {
       "You are a senior frontend engineer. Write clean JavaScript/React code.";
   }
   if (intent === "advice") {
-    systemPrompt = "You give simple, practical life advice. No long speeches.";
+    systemPrompt =
+      "You give simple, practical life advice. No long speeches.";
   }
 
-  //formattedContent
+  // For general intent, the default system prompt is used.
   const result = await streamText({
     model: openai("gpt-4o-mini"),
-    messages: [{ role: "system", content: systemPrompt }, ...messages],
+    messages: [
+      { role: "system", content: systemPrompt },
+      ...messages,
+    ],
   });
 
-  // Return the AI's response as a streaming response for better UX
   return result.toTextStreamResponse();
 }

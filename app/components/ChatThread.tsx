@@ -52,7 +52,11 @@ export default function ChatThread({ messages, streamingMessage, isLoading }: Pr
                       }
                 }
               >
-                {m.content}
+                <div style={{ whiteSpace: "pre-line" }}>
+                  {m.content.split("\n").map((line, i) => (
+                    <div key={i}>{line}</div>
+                  ))}
+                </div>
               </div>
             </div>
           ))}
