@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useChatStore } from "./lib/store";
 import type { Message } from "./lib/store";
 import { db } from "./lib/db";
@@ -19,6 +19,13 @@ export default function Home() {
   } = useChatStore();
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const focusInput = () => {
+  requestAnimationFrame(() => {
+    inputRef.current?.focus();
+  });
+};
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
@@ -27,8 +34,11 @@ export default function Home() {
     const updatedMessages = [...messages, userMessage];
     addMessage(userMessage);
     setInput("");
+    focusInput();
     setIsLoading(true);
+    focusInput();
     setStreamingMessage("");
+    
 
     const res = await fetch("/api/chat", {
       method: "POST",
@@ -86,6 +96,7 @@ export default function Home() {
 
     setMessages(finalMessages);
     setIsLoading(false);
+    focusInput();
   };
 
   return (
@@ -101,7 +112,8 @@ export default function Home() {
 
         <div className="border-t p-4 flex gap-2">
           <input
-            className="flex-1 border rounded-full px-4 py-2 text-sm outline-none"
+            ref={inputRef} 
+            className="flex-1 border rounded-full px-4 py-2 text-sm text-black outline-none"
             placeholder="Type a message..."
             value={input}
             onChange={(e) => setInput(e.target.value)}

@@ -1,36 +1,183 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Here’s a clean, professional `README.md` based on everything you’ve built so far. You can directly paste this into your project root.
 
-## Getting Started
+---
 
-First, run the development server:
+# 🤖 AI Chat Bot (Next.js + OpenAI)
+
+A full-stack AI chat application built with **Next.js App Router**, **OpenAI GPT-4o-mini**, **Zustand**, and **IndexedDB (Dexie)**.
+It supports multi-chat sessions, streaming responses, chat persistence, and AI-generated titles.
+
+---
+
+## ✨ Features
+
+* 💬 Real-time AI chat using OpenAI
+* ⚡ Streaming responses (word-by-word output)
+* 🧠 AI-generated chat titles
+* 💾 Persistent chat storage using IndexedDB (Dexie)
+* 📂 Multi-chat sidebar (create, switch, delete chats)
+* 🗑️ Delete chat with confirmation modal
+* ⚛️ Zustand for global state management
+* 🚀 Next.js App Router architecture
+
+---
+
+## 🛠️ Tech Stack
+
+* **Frontend:** Next.js (React, TypeScript)
+* **State Management:** Zustand
+* **AI Integration:** OpenAI API (`gpt-4o-mini`)
+* **Database (Client-side):** IndexedDB via Dexie.js
+* **Styling:** Tailwind CSS
+* **Streaming:** OpenAI streaming responses
+
+---
+
+## 📁 Project Structure
+
+```
+app/
+ ├── api/
+ │    ├── chat/route.ts        # Chat completion API
+ │    └── title/route.ts       # Chat title generator API
+ ├── components/
+ │    ├── ChatThread.tsx       # Chat UI renderer
+ │    ├── Sidebar.tsx          # Chat history + delete modal
+ ├── page.tsx                  # Main chat page
+ ├── layout.tsx                # Root layout
+
+lib/
+ ├── db.ts                     # Dexie IndexedDB setup
+ ├── store.ts                  # Zustand global store
+ ├── openai.ts                 # OpenAI client config
+```
+
+---
+
+## 🚀 Getting Started
+
+### 1. Clone the repo
+
+```bash
+git clone https://github.com/your-username/ai-chat-bot.git
+cd ai-chat-bot
+```
+
+---
+
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+---
+
+### 3. Add environment variables
+
+Create a `.env.local` file:
+
+```bash
+OPENAI_API_KEY=your_openai_api_key
+```
+
+---
+
+### 4. Run the app
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 💡 How It Works
 
-To learn more about Next.js, take a look at the following resources:
+### 1. Chat Flow
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+* User sends message
+* Message stored in Zustand state
+* API `/api/chat` sends request to OpenAI
+* Response streamed back in real-time
+* UI updates word-by-word
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+### 2. Chat Persistence
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+* Chats stored in IndexedDB (Dexie)
+* Each chat has:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+  * `id`
+  * `title`
+  * `messages[]`
+
+---
+
+### 3. Multi-chat System
+
+* Sidebar loads all saved chats
+* Click to switch between conversations
+* New chats automatically created
+* Delete chat via confirmation modal
+
+---
+
+### 4. AI Title Generation
+
+* First message triggers `/api/title`
+* AI generates short chat title
+* Stored with chat session
+
+---
+
+## 🧠 Key Highlights
+
+This project demonstrates:
+
+* Real-world AI integration
+* Streaming APIs in React
+* Client-side database usage
+* Global state management
+* Scalable chat architecture
+* Clean UI/UX patterns
+
+---
+
+## 🗑️ Future Improvements
+
+* Server-side database (PostgreSQL / Prisma)
+* Auth (login per user)
+* Chat sharing
+* File/image support
+* Voice input/output
+* AI tools (weather, jokes, etc.)
+
+---
+
+## 📸 UI Preview
+
+> Add screenshots here later (optional)
+
+---
+
+## 👩‍💻 Author
+
+Built by **Umangi Prajapati**
+
+---
+
+If you want next upgrade, I can help you:
+
+👉 turn this into a **portfolio-ready production app**
+👉 deploy it on **Vercel**
+👉 add **login + cloud DB (Supabase / Firebase)**
+👉 or add **AI tools (weather, jokes, career assistant, etc.)**
+
+Just tell me 👍
