@@ -178,3 +178,18 @@ This project demonstrates:
 
 Built by Umangi Prajapati
 
+
+##UI
+<img width="1512" height="833" alt="Screenshot 2026-04-15 at 3 37 04 PM" src="https://github.com/user-attachments/assets/2e719b5c-93b3-4661-b084-32f4207ca7b7" />
+
+##Joke
+<img width="1512" height="833" alt="Screenshot 2026-04-15 at 3 36 57 PM" src="https://github.com/user-attachments/assets/c5ef85eb-df01-47ea-86d1-254a77a72303" />
+
+##Light Dark Theme
+<img width="1512" height="833" alt="Screenshot 2026-04-15 at 3 36 50 PM" src="https://github.com/user-attachments/assets/24ae7d17-9d74-4ac8-91ea-5225468c9dda" />
+
+##Light Dark Theme
+<img width="1512" height="833" alt="Screenshot 2026-04-15 at 3 36 42 PM" src="https://github.com/user-attachments/assets/60426cc9-8fce-4bed-a3c3-6d6381a7b14e" />
+
+##Weather
+<img width="1512" height="833" alt="Screenshot 2026-04-15 at 3 36 22 PM" src="https://github.com/user-attachments/assets/7e3b6f37-5d5b-4061-9c48-49b2f21aced9" />
