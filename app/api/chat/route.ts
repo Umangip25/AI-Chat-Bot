@@ -1,22 +1,13 @@
-import OpenAI from "openai";
+import { openai } from "../../lib/openai";
+import { streamText } from "ai";
 
-// Initialize the OpenAI client with your API key
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
-
-// API route handler for POST requests to /api/chat
 export async function POST(req: Request) {
   const { messages } = await req.json();
 
-  // Create a chat completion using the OpenAI API
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+  const result = await streamText({
+    model: openai("gpt-4o-mini"),
     messages,
   });
 
-  // Return the assistant's reply as a JSON response
-  return Response.json({
-    reply: completion.choices[0].message.content,
-  });
+  return result.toTextStreamResponse();
 }
