@@ -8,17 +8,27 @@ import ChatThread from "./components/ChatThread";
 import Sidebar from "./components/SideBar";
 
 export default function Home() {
-  const { messages, addMessage, setMessages, currentChatId, setCurrentChatId } =
-    useChatStore();
+  const {
+    messages,
+    addMessage,
+    setMessages,
+    currentChatId,
+    setCurrentChatId,
+    streamingMessage,
+    setStreamingMessage,
+  } = useChatStore();
   const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const sendMessage = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() || isLoading) return;
 
     const userMessage: Message = { role: "user", content: input };
     const updatedMessages = [...messages, userMessage];
     addMessage(userMessage);
     setInput("");
+    setIsLoading(true);
+    setStreamingMessage("");
 
     const res = await fetch("/api/chat", {
       method: "POST",
@@ -29,28 +39,30 @@ export default function Home() {
     const decoder = new TextDecoder();
     let assistantReply = "";
 
+    // Stream response word by word into state
     if (reader) {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        assistantReply += decoder.decode(value, { stream: true });
+        const chunk = decoder.decode(value, { stream: true });
+        assistantReply += chunk;
+        setStreamingMessage(assistantReply);
       }
     }
+
+    // Clear streaming message and add final message
+    setStreamingMessage("");
+    addMessage({ role: "assistant", content: assistantReply });
 
     const finalMessages: Message[] = [
       ...updatedMessages,
       { role: "assistant", content: assistantReply },
     ];
 
-    addMessage({ role: "assistant", content: assistantReply });
-
-    // Check if this is a brand new chat
     const isNewChat = currentChatId === undefined;
-
     let title = "New Chat";
 
     if (isNewChat) {
-      // Generate title from first message
       const titleRes = await fetch("/api/title", {
         method: "POST",
         body: JSON.stringify({ message: userMessage.content }),
@@ -58,36 +70,35 @@ export default function Home() {
       const titleData = await titleRes.json();
       title = titleData.title;
     } else {
-      // Keep existing title
       const existingChat = await db.chats.get(currentChatId);
       title = existingChat?.title ?? "New Chat";
     }
 
-    // Save or update chat in IndexedDB
     const savedId = await db.chats.put({
-      id: currentChatId,  // undefined = new chat, number = update existing
+      id: currentChatId,
       title,
       messages: finalMessages,
     });
 
-    // Only update currentChatId if it was a new chat
     if (isNewChat) {
       setCurrentChatId(savedId as number);
     }
 
     setMessages(finalMessages);
+    setIsLoading(false);
   };
 
   return (
     <div className="flex h-screen">
-      {/* Sidebar */}
       <Sidebar />
 
-      {/* Main chat area */}
       <div className="flex flex-col flex-1 bg-white">
-        <ChatThread messages={messages} />
+        <ChatThread
+          messages={messages}
+          streamingMessage={streamingMessage}
+          isLoading={isLoading}
+        />
 
-        {/* Input area */}
         <div className="border-t p-4 flex gap-2">
           <input
             className="flex-1 border rounded-full px-4 py-2 text-sm outline-none"
@@ -95,12 +106,14 @@ export default function Home() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+            disabled={isLoading}
           />
           <button
             onClick={sendMessage}
-            className="bg-blue-500 text-white px-4 py-2 rounded-full text-sm hover:bg-blue-600"
+            disabled={isLoading}
+            className="bg-blue-500 text-white px-4 py-2 rounded-full text-sm hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Send
+            {isLoading ? "..." : "Send"}
           </button>
         </div>
       </div>
