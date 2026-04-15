@@ -4,12 +4,12 @@ import { useState, useEffect } from "react";
 import { useChatStore } from "./lib/store";
 import type { Message } from "./lib/store";
 import { db } from "./lib/db";
+import ChatThread from "./components/ChatThread";
 
 export default function Home() {
   const { messages, addMessage, setMessages } = useChatStore();
   const [input, setInput] = useState("");
 
-  // Load chat history from IndexedDB on component mount
   useEffect(() => {
     const load = async () => {
       const allChats = await db.chats.toArray();
@@ -21,72 +21,70 @@ export default function Home() {
   }, [setMessages]);
 
   const sendMessage = async () => {
-  const userMessage: Message = { role: "user", content: input };
+    const userMessage: Message = { role: "user", content: input };
+    const updatedMessages = [...messages, userMessage];
+    addMessage(userMessage);
+    setInput("");
 
-  const updatedMessages = [...messages, userMessage];
-  addMessage(userMessage);
-
-  const res = await fetch("/api/chat", {
-    method: "POST",
-    body: JSON.stringify({
-      messages: updatedMessages,
-    }),
-  });
-
-  const data = await res.json();
-
-  addMessage({ role: "assistant", content: data.reply as string });
-
-  const finalMessages: Message[] = [
-    ...updatedMessages,
-    { role: "assistant", content: data.reply as string },
-  ];
-
-  let title = "New Chat";
-
-  if (messages.length === 0) {
-    const titleRes = await fetch("/api/title", {
+    const res = await fetch("/api/chat", {
       method: "POST",
-      body: JSON.stringify({
-        message: userMessage.content,
-      }),
+      body: JSON.stringify({ messages: updatedMessages }),
     });
 
-    const titleData = await titleRes.json();
-    title = titleData.title;
-  }
+    const reader = res.body?.getReader();
+    const decoder = new TextDecoder();
+    let assistantReply = "";
 
-  await db.chats.put({
-    title,
-    messages: finalMessages,
-  });
+    // Read the streamed response chunk by chunk
+    if (reader) {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        assistantReply += decoder.decode(value, { stream: true });
+      }
+    }
 
-  setInput("");
-};
+    const finalMessages: Message[] = [
+      ...updatedMessages,
+      { role: "assistant", content: assistantReply },
+    ];
 
-  // Load chat history from IndexedDB on component mount
+    addMessage({ role: "assistant", content: assistantReply });
+
+    let title = "New Chat";
+    if (messages.length === 0) {
+      const titleRes = await fetch("/api/title", {
+        method: "POST",
+        body: JSON.stringify({ message: userMessage.content }),
+      });
+      const titleData = await titleRes.json();
+      title = titleData.title;
+    }
+
+    await db.chats.put({ title, messages: finalMessages });
+  };
+
   return (
-    <div className="p-6">
-      <div className="h-[400px] overflow-y-auto border p-4 mb-4">
-        {messages.map((m, i) => (
-          <div key={i}>
-           <b>{m.role === "user" ? "You" : "AI"}:</b> {m.content}
-          </div>
-        ))}
+    <div className="flex flex-col h-screen bg-white">
+      {/* Chat messages */}
+      <ChatThread messages={messages} />
+
+      {/* Input area */}
+      <div className="border-t p-4 flex gap-2">
+        <input
+          className="flex-1 border rounded-full px-4 py-2 text-sm outline-none"
+          placeholder="Type a message..."
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+        />
+        <button
+          onClick={sendMessage}
+          className="bg-blue-500 text-white px-4 py-2 rounded-full text-sm hover:bg-blue-600"
+        >
+          Send
+        </button>
       </div>
-
-      <input
-        className="border p-2 w-full"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-      />
-
-      <button
-        onClick={sendMessage}
-        className="mt-2 bg-blue-500 text-white px-4 py-2"
-      >
-        Send
-      </button>
     </div>
   );
 }
