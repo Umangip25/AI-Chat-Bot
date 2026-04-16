@@ -1,6 +1,9 @@
 "use client";
 
 import ReactMarkdown from "react-markdown";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 
 type Props = {
   content: string;
@@ -10,6 +13,8 @@ export default function MarkdownRenderer({ content }: Props) {
   return (
     <div>
       <ReactMarkdown
+        remarkPlugins={[remarkMath]}
+        rehypePlugins={[rehypeKatex]}
         components={{
           p: ({ children }) => <p style={{ marginBottom: "0.5rem" }}>{children}</p>,
           ul: ({ children }) => <ul style={{ listStyleType: "disc", paddingLeft: "1.25rem", marginBottom: "0.5rem" }}>{children}</ul>,

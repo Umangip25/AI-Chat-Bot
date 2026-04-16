@@ -136,11 +136,7 @@ export async function POST(req: Request) {
   }
   if (intent === "math") {
     systemPrompt =
-      "You are a math assistant. " +
-      "- For simple calculations, return only the final answer. " +
-      "- For complex problems, explain step-by-step in plain text. " +
-      "- Do NOT use LaTeX, backslashes, or math formatting symbols. " +
-      "- Use clean plain text only.";
+      "You are a math tutor. Solve step by step clearly and correctly.";
   }
   if (intent === "code") {
     systemPrompt =

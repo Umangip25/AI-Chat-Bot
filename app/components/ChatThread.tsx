@@ -17,14 +17,6 @@ export default function ChatThread({ messages, streamingMessage, isLoading }: Pr
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, streamingMessage]);
 
-  function cleanAIText(text: string) {
-  return text
-    .replace(/\\\(/g, "")
-    .replace(/\\\)/g, "")
-    .replace(/\\\[/g, "")
-    .replace(/\\\]/g, "");
-}
-
   return (
     <div
       className="h-full overflow-y-auto p-4 space-y-4"
@@ -63,11 +55,11 @@ export default function ChatThread({ messages, streamingMessage, isLoading }: Pr
               >
                 {m.role === "user" ? (
                   // User messages: plain text is fine
-                  <span style={{ whiteSpace: "pre-wrap" }}>{cleanAIText(m.content)}</span>
+                  <span style={{ whiteSpace: "pre-wrap" }}>{m.content}</span>
                 ) : (
                   // AI messages: render markdown
                   <div className="prose prose-sm max-w-none dark:prose-invert">
-                    <MarkdownRenderer content={cleanAIText(m.content)} />
+                    <MarkdownRenderer content={m.content} />
                   </div>
                 )}
               </div>
@@ -113,7 +105,7 @@ export default function ChatThread({ messages, streamingMessage, isLoading }: Pr
                   borderBottomLeftRadius: "4px",
                 }}
               >
-                <MarkdownRenderer content={cleanAIText(streamingMessage)} />
+                <MarkdownRenderer content={streamingMessage} />
                 <span
                   className="inline-block w-0.5 h-3.5 ml-1 rounded-full animate-pulse align-middle"
                   style={{ background: "var(--accent)" }}
