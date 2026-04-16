@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import ReactMarkdown from "react-markdown";
 import type { Message } from "../lib/store";
+import MarkdownRenderer from "./MarkdownRenderer";
 
 type Props = {
   messages: Message[];
@@ -52,11 +54,15 @@ export default function ChatThread({ messages, streamingMessage, isLoading }: Pr
                       }
                 }
               >
-                <div style={{ whiteSpace: "pre-line" }}>
-                  {m.content.split("\n").map((line, i) => (
-                    <div key={i}>{line}</div>
-                  ))}
-                </div>
+                {m.role === "user" ? (
+                  // User messages: plain text is fine
+                  <span style={{ whiteSpace: "pre-wrap" }}>{m.content}</span>
+                ) : (
+                  // AI messages: render markdown
+                  <div className="prose prose-sm max-w-none dark:prose-invert">
+                    <MarkdownRenderer content={m.content} />
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -100,7 +106,7 @@ export default function ChatThread({ messages, streamingMessage, isLoading }: Pr
                   borderBottomLeftRadius: "4px",
                 }}
               >
-                {streamingMessage}
+                <MarkdownRenderer content={streamingMessage} />
                 <span
                   className="inline-block w-0.5 h-3.5 ml-1 rounded-full animate-pulse align-middle"
                   style={{ background: "var(--accent)" }}
