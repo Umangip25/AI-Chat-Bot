@@ -1,9 +1,3 @@
-Got it — I updated your README to clearly include **local storage persistence + chat max limit feature**, while keeping everything clean and recruiter-ready.
-
-Here is your updated version (only meaningful additions, no fluff):
-
----
-
 # 🤖 AI Chat App (Next.js + OpenAI)
 
 A full-stack AI chat application built with **Next.js App Router**, **OpenAI GPT-4o-mini**, **Zustand**, and **IndexedDB (Dexie)**.
@@ -132,3 +126,7 @@ Built by Umangi Prajapati
 
 ## 📸 Weather
 <img width="1512" height="833" alt="WeatherM" src="https://github.com/user-attachments/assets/7e3b6f37-5d5b-4061-9c48-49b2f21aced9" />
+
+## 📸 Max 10 Messages Limit (Rate Limiting)
+<img width="1512" height="833" alt="Max 10 Messages Limit(Rate Limiting)" src="https://github.com/user-attachments/assets/391dd580-89dd-43e6-8890-b71e331a6e7f" />
+
