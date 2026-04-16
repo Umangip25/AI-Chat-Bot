@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import ReactMarkdown from "react-markdown";
 import type { Message } from "../lib/store";
 import MarkdownRenderer from "./MarkdownRenderer";
 

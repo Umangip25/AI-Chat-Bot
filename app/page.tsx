@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useChatStore } from "./lib/store";
 import type { Message } from "./lib/store";
-import { db } from "./lib/db";
+import { db, getUserId, getUserChats, getChatLimitStatus, MAX_CHATS, MAX_MESSAGES, COOLDOWN_MS } from "./lib/db";
 import ChatThread from "./components/ChatThread";
 import Sidebar from "./components/SideBar";
+import LimitBanner from "./components/LimitBanner";
 import { ThemeProvider } from "./lib/ThemeContext";
 import ThemeToggle from "./components/ThemeToggle";
 
-// Inner component so it can consume the theme context
 function AppShell() {
   const {
     messages,
@@ -19,21 +19,57 @@ function AppShell() {
     setCurrentChatId,
     streamingMessage,
     setStreamingMessage,
+    isLimited,
+    cooldownRemaining,
+    setLimitStatus,
   } = useChatStore();
 
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [chatLimitReached, setChatLimitReached] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Focus input after sending a message
   const focusInput = () => {
     requestAnimationFrame(() => inputRef.current?.focus());
   };
 
-  // Handle sending a message
+  // Check limits whenever current chat changes
+  useEffect(() => {
+    const checkLimits = async () => {
+      // Check chat limit
+      const userChats = await getUserChats();
+      setChatLimitReached(userChats.length >= MAX_CHATS && currentChatId === undefined);
+
+      // Check message limit for current chat
+      if (currentChatId !== undefined) {
+        const chat = await db.chats.get(currentChatId);
+        if (chat) {
+          const { isLimited, cooldownRemaining } = getChatLimitStatus(chat);
+          setLimitStatus(isLimited, cooldownRemaining);
+        }
+      } else {
+        setLimitStatus(false, 0);
+      }
+    };
+
+    checkLimits();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentChatId, messages]);
+
   const sendMessage = async () => {
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading || isLimited || chatLimitReached) return;
+
+    // Check message count before sending
+    const userMessages = messages.filter((m) => m.role === "user");
+    if (userMessages.length >= MAX_MESSAGES) {
+      // Mark limit hit time in db
+      if (currentChatId !== undefined) {
+        await db.chats.update(currentChatId, { lastLimitHitAt: Date.now() });
+      }
+      setLimitStatus(true, COOLDOWN_MS);
+      return;
+    }
 
     const userMessage: Message = { role: "user", content: input };
     const updatedMessages = [...messages, userMessage];
@@ -65,13 +101,11 @@ function AppShell() {
     setStreamingMessage("");
     addMessage({ role: "assistant", content: assistantReply });
 
-    // Save chat to IndexedDB
     const finalMessages: Message[] = [
       ...updatedMessages,
       { role: "assistant", content: assistantReply },
     ];
 
-    // If it's a new chat, generate a title. Otherwise, keep the existing title.
     const isNewChat = currentChatId === undefined;
     let title = "New Chat";
 
@@ -87,11 +121,14 @@ function AppShell() {
       title = existingChat?.title ?? "New Chat";
     }
 
-    // Upsert the chat in IndexedDB
+    const userId = getUserId();
+
     const savedId = await db.chats.put({
       id: currentChatId,
+      userId,
       title,
       messages: finalMessages,
+      createdAt: isNewChat ? Date.now() : (await db.chats.get(currentChatId))?.createdAt ?? Date.now(),
     });
 
     if (isNewChat) setCurrentChatId(savedId as number);
@@ -105,13 +142,11 @@ function AppShell() {
       className="flex h-screen overflow-hidden"
       style={{ background: "var(--bg-primary)" }}
     >
-      {/* Sidebar */}
       <Sidebar
         isOpen={isSidebarOpen}
         onToggle={() => setIsSidebarOpen((o) => !o)}
       />
 
-      {/* Main area */}
       <div className="flex flex-col flex-1 min-w-0">
         {/* Top bar */}
         <div
@@ -121,7 +156,6 @@ function AppShell() {
             borderBottom: "1px solid var(--topbar-border)",
           }}
         >
-          {/* Sidebar toggle */}
           <button
             onClick={() => setIsSidebarOpen((o) => !o)}
             className="text-lg leading-none transition-opacity hover:opacity-70"
@@ -130,8 +164,6 @@ function AppShell() {
           >
             ☰
           </button>
-
-          {/* Theme toggle */}
           <ThemeToggle />
         </div>
 
@@ -143,6 +175,12 @@ function AppShell() {
             isLoading={isLoading}
           />
         </div>
+
+        {/* Limit banners */}
+        <LimitBanner
+          cooldownRemaining={cooldownRemaining}
+          chatLimitReached={chatLimitReached}
+        />
 
         {/* Input bar */}
         <div
@@ -159,17 +197,24 @@ function AppShell() {
               background: "var(--bg-input)",
               color: "var(--text-primary)",
               border: "1px solid var(--border)",
+              opacity: isLimited || chatLimitReached ? 0.5 : 1,
             }}
-            placeholder="Type a message…"
+            placeholder={
+              isLimited
+                ? "Wait for cooldown to end…"
+                : chatLimitReached
+                ? "Delete a chat to continue…"
+                : "Type a message…"
+            }
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-            disabled={isLoading}
+            disabled={isLoading || isLimited || chatLimitReached}
           />
 
           <button
             onClick={sendMessage}
-            disabled={isLoading}
+            disabled={isLoading || isLimited || chatLimitReached}
             className="px-4 py-2 rounded-full text-sm font-medium transition-opacity disabled:opacity-40"
             style={{ background: "var(--accent)", color: "#fff" }}
           >
@@ -181,7 +226,6 @@ function AppShell() {
   );
 }
 
-// Main page component that wraps the app shell with the theme provider
 export default function Home() {
   return (
     <ThemeProvider>

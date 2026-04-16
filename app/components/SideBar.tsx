@@ -19,8 +19,9 @@ export default function Sidebar({ isOpen }: SidebarProps) {
 
   useEffect(() => {
     const loadChats = async () => {
-      const allChats = await db.chats.toArray();
-      setChats(allChats.reverse());
+      const { getUserChats } = await import("../lib/db");
+      const userChats = await getUserChats();
+      setChats(userChats);
     };
     loadChats();
   }, [currentChatId]);
