@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { db } from "../lib/db";
 import type { Chat } from "../lib/db";
 import { useChatStore } from "../lib/store";
+import newChatIcon from "../assets/newchat.png";
+import { useTheme } from "../lib/ThemeContext";
+import Image from "next/image";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -16,6 +19,7 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
   const [chatToDelete, setChatToDelete] = useState<Chat | null>(null);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const { theme } = useTheme();
 
   useEffect(() => {
     const loadChats = async () => {
@@ -81,7 +85,7 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
         }}
       >
         {/* New Chat button */}
-        <div className="px-3 pt-4 pb-2">
+        <div className="flex self-center px-3 pt-4 pb-2">
           <button
             onClick={newChat}
             className="w-full rounded-lg px-3 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
@@ -96,7 +100,13 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
               (e.currentTarget.style.background = "transparent")
             }
           >
-            <span className="text-base">✏️</span>
+            <Image
+              src={newChatIcon}
+              alt="New Chat"
+              width={20}
+              height={20}
+              className={theme === "dark" ? "invert" : ""}
+            />
             New Chat
           </button>
         </div>
