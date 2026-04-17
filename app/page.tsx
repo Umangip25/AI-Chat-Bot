@@ -34,14 +34,17 @@ function AppShell() {
     requestAnimationFrame(() => inputRef.current?.focus());
   };
 
-  // Check limits whenever current chat changes
+  useEffect(() => {
+    if (window.innerWidth < 768) {
+      setIsSidebarOpen(false);
+    }
+  }, []);
+
   useEffect(() => {
     const checkLimits = async () => {
-      // Check chat limit
       const userChats = await getUserChats();
       setChatLimitReached(userChats.length >= MAX_CHATS && currentChatId === undefined);
 
-      // Check message limit for current chat
       if (currentChatId !== undefined) {
         const chat = await db.chats.get(currentChatId);
         if (chat) {
@@ -60,10 +63,8 @@ function AppShell() {
   const sendMessage = async () => {
     if (!input.trim() || isLoading || isLimited || chatLimitReached) return;
 
-    // Check message count before sending
     const userMessages = messages.filter((m) => m.role === "user");
     if (userMessages.length >= MAX_MESSAGES) {
-      // Mark limit hit time in db
       if (currentChatId !== undefined) {
         await db.chats.update(currentChatId, { lastLimitHitAt: Date.now() });
       }
@@ -139,87 +140,89 @@ function AppShell() {
 
   return (
     <div
-      className="flex h-screen overflow-hidden"
+      className="flex flex-col h-screen overflow-hidden"
       style={{ background: "var(--bg-primary)" }}
     >
-      <Sidebar
-        isOpen={isSidebarOpen}
-        onToggle={() => setIsSidebarOpen((o) => !o)}
-      />
-
-      <div className="flex flex-col flex-1 min-w-0">
-        {/* Top bar */}
-        <div
-          className="flex items-center justify-between px-4 py-3 shrink-0"
-          style={{
-            background: "var(--topbar-bg)",
-            borderBottom: "1px solid var(--topbar-border)",
-          }}
+      {/* Top bar — full width, above everything */}
+      <div
+        className="flex items-center justify-between px-4 py-3 shrink-0 z-10"
+        style={{
+          background: "var(--topbar-bg)",
+        }}
+      >
+        <button
+          onClick={() => setIsSidebarOpen((o) => !o)}
+          className="text-lg leading-none transition-opacity hover:opacity-70"
+          style={{ color: "var(--text-secondary)" }}
+          aria-label="Toggle sidebar"
         >
-          <button
-            onClick={() => setIsSidebarOpen((o) => !o)}
-            className="text-lg leading-none transition-opacity hover:opacity-70"
-            style={{ color: "var(--text-secondary)" }}
-            aria-label="Toggle sidebar"
-          >
-            ☰
-          </button>
-          <ThemeToggle />
-        </div>
+          ☰
+        </button>
+        <ThemeToggle />
+      </div>
 
-        {/* Chat messages */}
-        <div className="flex-1 overflow-hidden">
-          <ChatThread
-            messages={messages}
-            streamingMessage={streamingMessage}
-            isLoading={isLoading}
-          />
-        </div>
-
-        {/* Limit banners */}
-        <LimitBanner
-          cooldownRemaining={cooldownRemaining}
-          chatLimitReached={chatLimitReached}
+      {/* Sidebar + Chat below topbar */}
+      <div className="flex flex-1 overflow-hidden relative">
+        <Sidebar
+          isOpen={isSidebarOpen}
+          onToggle={() => setIsSidebarOpen((o) => !o)}
         />
 
-        {/* Input bar */}
-        <div
-          className="px-4 py-3 flex gap-2 shrink-0"
-          style={{
-            background: "var(--topbar-bg)",
-            borderTop: "1px solid var(--topbar-border)",
-          }}
-        >
-          <input
-            ref={inputRef}
-            className="flex-1 rounded-full px-4 py-2 text-sm outline-none transition-colors"
-            style={{
-              background: "var(--bg-input)",
-              color: "var(--text-primary)",
-              border: "1px solid var(--border)",
-              opacity: isLimited || chatLimitReached ? 0.5 : 1,
-            }}
-            placeholder={
-              isLimited
-                ? "Wait for cooldown to end…"
-                : chatLimitReached
-                ? "Delete a chat to continue…"
-                : "Type a message…"
-            }
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-            disabled={isLoading || isLimited || chatLimitReached}
+        <div className="flex flex-col flex-1 min-w-0">
+          {/* Chat messages */}
+          <div className="flex-1 overflow-hidden">
+            <ChatThread
+              messages={messages}
+              streamingMessage={streamingMessage}
+              isLoading={isLoading}
+            />
+          </div>
+
+          {/* Limit banners */}
+          <LimitBanner
+            cooldownRemaining={cooldownRemaining}
+            chatLimitReached={chatLimitReached}
           />
 
-          <button
-            onClick={sendMessage}
-            disabled={isLoading || isLimited || chatLimitReached}
-            className="px-4 py-2 rounded-full text-sm font-medium transition-opacity disabled:opacity-40"
-            style={{ background: "var(--accent)", color: "#fff" }}
+          {/* Input bar */}
+          <div
+            className="px-3 py-3 sm:px-4 flex gap-2 shrink-0"
+            style={{
+              background: "var(--topbar-bg)",
+              borderTop: "1px solid var(--topbar-border)",
+            }}
           >
-            {isLoading ? "…" : "Send"}
-          </button>
+            <input
+              ref={inputRef}
+              className="flex-1 rounded-full px-4 py-2 text-sm outline-none transition-colors min-w-0"
+              style={{
+                background: "var(--bg-input)",
+                color: "var(--text-primary)",
+                border: "1px solid var(--border)",
+                opacity: isLimited || chatLimitReached ? 0.5 : 1,
+              }}
+              placeholder={
+                isLimited
+                  ? "Wait for cooldown to end…"
+                  : chatLimitReached
+                  ? "Delete a chat to continue…"
+                  : "Type a message…"
+              }
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+              disabled={isLoading || isLimited || chatLimitReached}
+            />
+
+            <button
+              onClick={sendMessage}
+              disabled={isLoading || isLimited || chatLimitReached}
+              className="shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-opacity disabled:opacity-40"
+              style={{ background: "var(--accent)", color: "#fff" }}
+            >
+              {isLoading ? "…" : "Send"}
+            </button>
+          </div>
         </div>
       </div>
     </div>

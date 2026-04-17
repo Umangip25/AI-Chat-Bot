@@ -7,23 +7,27 @@
 
 /* Theme Variables */
 /* Default = Dark */
-:root,
+:root
+{
+  --topbar-height: 49px;
+}
 [data-theme="dark"] {
-  --bg-primary: #0f1117;
-  --bg-secondary: #1a1d27;
-  --bg-sidebar: #13151f;
-  --bg-input: #1e2130;
+  --bg-sidebar: #171717;
+  --bg-primary: #212121;
+  --bg-secondary: #2f2f2f;
+  --bg-sidebar: #171717;
+  --bg-input: #2f2f2f;
 
-  --border: #2a2d3e;
+  --border: rgba(255,255,255,0.08);
 
-  --text-primary: #e8eaf0;
-  --text-secondary: #6b7280;
-  --text-muted: #3d4251;
+  --text-primary: #ececec;
+  --text-secondary: #8e8ea0;
+  --text-muted: #4a4a5a;
 
-  --bubble-user: #3b5bdb;
-  --bubble-user-text: #ffffff;
-  --bubble-ai: #1e2130;
-  --bubble-ai-text: #d1d5db;
+  --bubble-user: #2f2f2f;
+  --bubble-user-text: #ececec;
+  --bubble-ai: #212121;
+  --bubble-ai-text: #ececec;
 
   --accent: #3b5bdb;
   --accent-hover: #2f4ac4;
@@ -31,31 +35,30 @@
   --danger: #ef4444;
   --danger-hover: #dc2626;
 
-  --topbar-bg: #0f1117;
-  --topbar-border: #2a2d3e;
+  --topbar-bg: #212121;
+  --topbar-border: transparent;
 
-  --scrollbar-thumb: #2a2d3e;
+  --scrollbar-thumb: #2f2f2f;
   --scrollbar-track: transparent;
 }
 
-/* Light Theme */
 [data-theme="light"] {
-  --bg-primary: #f5f6fa;
-  --bg-secondary: #ffffff;
+  --bg-sidebar: #f0f0f0;  
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9f9f9;
+  --bg-sidebar: #f9f9f9;
+  --bg-input: #efefef;
 
-  --bg-sidebar: #13151f;
+  --border: rgba(0,0,0,0.08);
 
-  --bg-input: #ffffff;
-  --border: #e2e4eb;
-
-  --text-primary: #111827;
+  --text-primary: #0d0d0d;
   --text-secondary: #6b7280;
   --text-muted: #c4c9d4;
 
-  --bubble-user: #3b5bdb;
-  --bubble-user-text: #ffffff;
+  --bubble-user: #efefef;
+  --bubble-user-text: #0d0d0d;
   --bubble-ai: #ffffff;
-  --bubble-ai-text: #1f2937;
+  --bubble-ai-text: #0d0d0d;
 
   --accent: #3b5bdb;
   --accent-hover: #2f4ac4;
@@ -64,9 +67,9 @@
   --danger-hover: #dc2626;
 
   --topbar-bg: #ffffff;
-  --topbar-border: #e2e4eb;
+  --topbar-border: transparent;
 
-  --scrollbar-thumb: #d1d5db;
+  --scrollbar-thumb: #e5e7eb;
   --scrollbar-track: transparent;
 }
 
@@ -119,5 +122,12 @@ body {
   100% {
     transform: scale(1);
     opacity: 1;
+  }
+}
+
+@media (min-width: 768px) {
+  .sidebar {
+    top: 0 !important;
+    height: 100% !important;
   }
 }

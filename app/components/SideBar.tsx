@@ -7,10 +7,10 @@ import { useChatStore } from "../lib/store";
 
 interface SidebarProps {
   isOpen: boolean;
-  onToggle?: () => void; // optional (no warning now)
+  onToggle?: () => void;
 }
 
-export default function Sidebar({ isOpen }: SidebarProps) {
+export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
   const [chats, setChats] = useState<Chat[]>([]);
   const { setMessages, setCurrentChatId, currentChatId } = useChatStore();
   const [chatToDelete, setChatToDelete] = useState<Chat | null>(null);
@@ -26,211 +26,226 @@ export default function Sidebar({ isOpen }: SidebarProps) {
     loadChats();
   }, [currentChatId]);
 
-  // When a chat is selected, load its messages into the chat thread
   const selectChat = (chat: Chat) => {
     setMessages(chat.messages);
     setCurrentChatId(chat.id);
   };
 
-  // Start a new chat by clearing messages and resetting current chat ID
   const newChat = () => {
     setMessages([]);
     setCurrentChatId(undefined);
   };
 
-  // Delete a chat from IndexedDB and update the UI accordingly
   const deleteChat = async () => {
     if (!chatToDelete?.id) return;
-
     await db.chats.delete(chatToDelete.id);
     const allChats = await db.chats.toArray();
     setChats(allChats.reverse());
-
     if (currentChatId === chatToDelete.id) {
       setMessages([]);
       setCurrentChatId(undefined);
     }
-
     setChatToDelete(null);
   };
 
-  // Close the chat options menu when clicking outside
   useEffect(() => {
     if (openMenuId === null) return;
-
     const handleClick = () => setOpenMenuId(null);
     document.addEventListener("click", handleClick);
-
     return () => document.removeEventListener("click", handleClick);
   }, [openMenuId]);
 
   return (
     <>
+      {/* Mobile backdrop */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-40 md:hidden"
+          style={{
+            top: "var(--topbar-height)",
+            background: "rgba(0,0,0,0.7)"
+          }}
+          onClick={onToggle}
+        />
+      )}
+
       {/* Sidebar */}
       <div
-        className={`h-screen flex flex-col shrink-0 transition-all duration-300 overflow-hidden ${
-          isOpen ? "w-64" : "w-0"
-        }`}
+        className={`sidebar fixed md:relative z-50 md:z-auto flex flex-col shrink-0 transition-all duration-300 overflow-hidden
+    ${isOpen ? "w-64 translate-x-0" : "w-0 -translate-x-full md:translate-x-0"}`}
         style={{
           background: "var(--bg-sidebar)",
-          borderRight: "1px solid rgba(255,255,255,0.06)",
+          borderRight: "1px solid var(--border)",
+          top: "var(--topbar-height)",
+          height: "calc(100vh - var(--topbar-height))",
         }}
       >
-        {/* New Chat */}
-        <div
-          className="p-4 min-w-[256px]"
-          style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
-        >
+        {/* New Chat button */}
+        <div className="px-3 pt-4 pb-2">
           <button
             onClick={newChat}
-            className="w-full rounded-lg px-4 py-2 text-sm font-medium"
-            style={{ background: "var(--accent)", color: "#fff" }}
+            className="w-full rounded-lg px-3 py-2 text-sm font-medium flex items-center gap-2 transition-colors"
+            style={{
+              color: "var(--text-primary)",
+              background: "transparent",
+            }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.background = "var(--bg-input)")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.background = "transparent")
+            }
           >
-            + New Chat
+            <span className="text-base">✏️</span>
+            New Chat
           </button>
         </div>
 
         {/* Chat list */}
-        <div className="flex-1 overflow-y-auto p-2 space-y-0.5 min-w-[256px]">
+        <div className="flex-1 overflow-y-auto px-2 space-y-0.5">
           {chats.length === 0 ? (
-            <p className="text-center mt-6 text-xs" style={{ color: "#4b5563" }}>
+            <p
+              className="text-center mt-8 text-xs"
+              style={{ color: "var(--text-muted)" }}
+            >
               No chats yet
             </p>
           ) : (
-            chats.map((chat) => {
-              if (!chat.id) return null;
-              const id = chat.id;
-              const isActive = currentChatId === id;
+            <>
+              <p
+                className="px-3 py-1 text-xs font-medium"
+                style={{ color: "var(--text-secondary)" }}
+              >
+                Recents
+              </p>
+              {chats.map((chat) => {
+                if (!chat.id) return null;
+                const id = chat.id;
+                const isActive = currentChatId === id;
 
-              return (
-                <div
-                  key={id}
-                  className="relative flex items-center justify-between px-3 py-2 rounded-lg text-sm group"
-                  style={{
-                    background: isActive
-                      ? "rgba(59,91,219,0.18)"
-                      : "transparent",
-                    cursor: "pointer",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive)
-                      e.currentTarget.style.background =
-                        "rgba(255,255,255,0.05)";
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive)
-                      e.currentTarget.style.background = "transparent";
-                  }}
-                >
-                  <span
-                    onClick={() => selectChat(chat)}
-                    className="truncate flex-1"
+                return (
+                  <div
+                    key={id}
+                    className="relative flex items-center justify-between px-3 py-2 rounded-lg text-sm group cursor-pointer"
                     style={{
-                      color: isActive ? "#a5b4fc" : "#9ca3af",
+                      background: isActive
+                        ? "var(--bg-input)"
+                        : "transparent",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isActive)
+                        e.currentTarget.style.background = "var(--bg-input)";
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive)
+                        e.currentTarget.style.background = "transparent";
                     }}
                   >
-                    {chat.title || "Untitled Chat"}
-                  </span>
-
-                  <button
-                    className="px-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                    style={{ color: "#6b7280" }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setOpenMenuId((prev) =>
-                        prev === id ? null : id
-                      );
-                    }}
-                  >
-                    ⋯
-                  </button>
-
-                  {openMenuId === id && (
-                    <div
-                      onClick={(e) => e.stopPropagation()}
-                      className="absolute right-2 top-10 w-36 rounded-lg shadow-xl z-50 overflow-hidden"
+                    <span
+                      onClick={() => selectChat(chat)}
+                      className="truncate flex-1"
                       style={{
-                        background: "#1e2130",
-                        border: "1px solid rgba(255,255,255,0.08)",
+                        color: isActive
+                          ? "var(--text-primary)"
+                          : "var(--text-secondary)",
+                        fontWeight: isActive ? "500" : "400",
                       }}
                     >
-                      <button
-                        onClick={() => {
-                          setChatToDelete(chat);
-                          setOpenMenuId(null);
-                        }}
-                        className="w-full text-left px-3 py-2 text-xs"
-                        style={{ color: "#f87171" }}
-                      >
-                        Delete chat
-                      </button>
+                      {chat.title || "Untitled Chat"}
+                    </span>
 
-                      <button
-                        onClick={() => {
-                          navigator.clipboard.writeText(
-                            JSON.stringify(chat.messages, null, 2)
-                          );
-                          setOpenMenuId(null);
-                          setToast("Copied to clipboard");
-                          setTimeout(() => setToast(null), 2000);
+                    <button
+                      className="px-1 opacity-0 group-hover:opacity-100 transition-opacity text-base"
+                      style={{ color: "var(--text-secondary)" }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenMenuId((prev) => (prev === id ? null : id));
+                      }}
+                    >
+                      ⋯
+                    </button>
+
+                    {openMenuId === id && (
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        className="absolute right-2 top-10 w-36 rounded-xl shadow-xl z-50 overflow-hidden"
+                        style={{
+                          background: "var(--bg-secondary)",
+                          border: "1px solid var(--border)",
                         }}
-                        className="w-full text-left px-3 py-2 text-xs"
-                        style={{ color: "#9ca3af" }}
                       >
-                        Share chat
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })
+                        <button
+                          onClick={() => {
+                            setChatToDelete(chat);
+                            setOpenMenuId(null);
+                          }}
+                          className="w-full text-left px-3 py-2 text-xs hover:opacity-80"
+                          style={{ color: "var(--danger)" }}
+                        >
+                          Delete chat
+                        </button>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(
+                              JSON.stringify(chat.messages, null, 2)
+                            );
+                            setOpenMenuId(null);
+                            setToast("Copied to clipboard");
+                            setTimeout(() => setToast(null), 2000);
+                          }}
+                          className="w-full text-left px-3 py-2 text-xs hover:opacity-80"
+                          style={{ color: "var(--text-secondary)" }}
+                        >
+                          Share chat
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </>
           )}
         </div>
 
-        {/* User Online Footer */}
-        <div
-          className="p-3 flex items-center gap-2 min-w-[256px]"
-          style={{
-            borderTop: "1px solid rgba(255,255,255,0.06)",
-          }}
-        >
-          {/* Avatar */}
+        {/* User footer */}
+        <div className="px-3 py-3">
           <div
-            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium"
-            style={{
-              background: "var(--bg-input)",
-              color: "var(--text-primary)",
-              border: "1px solid var(--border)",
-            }}
+            className="flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors"
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.background = "var(--bg-input)")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.background = "transparent")
+            }
           >
-            U
-          </div>
-
-          {/* Name + Status */}
-          <div className="flex flex-col leading-tight">
-            <span
-              className="text-xs font-medium"
-              style={{ color: "var(--text-primary)" }}
+            <div
+              className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0"
+              style={{
+                background: "var(--accent)",
+                color: "#fff",
+              }}
             >
-              You
-            </span>
-
-            <div className="flex items-center gap-1">
-              {/* Green dot */}
+              U
+            </div>
+            <div className="flex flex-col leading-tight">
               <span
-                className="w-2 h-2 rounded-full"
-                style={{
-                  background: "#22c55e",
-                  boxShadow: "0 0 6px rgba(34,197,94,0.8)",
-                }}
-              />
-
-              <span
-                className="text-[10px]"
-                style={{ color: "var(--text-secondary)" }}
+                className="text-xs font-medium"
+                style={{ color: "var(--text-primary)" }}
               >
-                Online
+                You
               </span>
+              <div className="flex items-center gap-1">
+                <span
+                  className="w-1.5 h-1.5 rounded-full"
+                  style={{ background: "#22c55e" }}
+                />
+                <span
+                  className="text-[10px]"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  Online
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -240,11 +255,11 @@ export default function Sidebar({ isOpen }: SidebarProps) {
       {chatToDelete && (
         <div
           className="fixed inset-0 flex items-center justify-center z-50"
-          style={{ background: "rgba(0,0,0,0.6)" }}
+          style={{ background: "rgba(0,0,0,0.5)" }}
           onClick={() => setChatToDelete(null)}
         >
           <div
-            className="rounded-xl p-6 w-[320px] shadow-2xl"
+            className="rounded-2xl p-6 w-[320px] shadow-2xl"
             style={{
               background: "var(--bg-secondary)",
               border: "1px solid var(--border)",
@@ -257,17 +272,12 @@ export default function Sidebar({ isOpen }: SidebarProps) {
             >
               Delete Chat
             </h2>
-
-            <p
-              className="text-sm mb-6"
-              style={{ color: "var(--text-secondary)" }}
-            >
+            <p className="text-sm mb-6" style={{ color: "var(--text-secondary)" }}>
               Delete{" "}
               <span style={{ color: "var(--text-primary)" }}>
                 {chatToDelete.title || "Untitled Chat"}
               </span>
             </p>
-
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setChatToDelete(null)}
@@ -280,7 +290,6 @@ export default function Sidebar({ isOpen }: SidebarProps) {
               >
                 Cancel
               </button>
-
               <button
                 onClick={deleteChat}
                 className="px-4 py-2 text-sm rounded-lg font-medium"
@@ -298,9 +307,9 @@ export default function Sidebar({ isOpen }: SidebarProps) {
         <div
           className="fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full text-sm shadow-lg z-50"
           style={{
-            background: "#1e2130",
-            color: "#e8eaf0",
-            border: "1px solid rgba(255,255,255,0.08)",
+            background: "var(--bg-secondary)",
+            color: "var(--text-primary)",
+            border: "1px solid var(--border)",
           }}
         >
           {toast}
