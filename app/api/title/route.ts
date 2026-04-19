@@ -10,7 +10,7 @@ export async function POST(req: Request) {
 
   const { text } = await generateText({
     model: openai("gpt-4o-mini"),
-    prompt: `Generate a short title (max 5 words) for a chat that starts with: "${message}". Return only the title, nothing else.`,
+    prompt: `Generate a short title (max 5 words) for a chat that starts with: ${message}. Return only the title, nothing else.`,
   });
 
   return Response.json({ title: text ?? "Untitled Chat" });
