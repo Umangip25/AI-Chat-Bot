@@ -97,7 +97,7 @@ It supports real-time streaming chat, multi-session conversations, persistent st
 ---
 
 ### 🚫 Rate Limiting
-* System enforces a **maximum message limit per chat**
+* System enforces a **maximum 10 message limit per chat**
 * System enforces a **maximum number of chats**
 * When message limit is reached:
   * Cooldown timer is applied
