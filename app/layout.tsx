@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 // Load fonts with CSS variables for easy use in Tailwind
 const geistSans = Geist({
@@ -33,6 +35,8 @@ export default function RootLayout({
     >
       <body suppressHydrationWarning className="min-h-full flex flex-col">
         {children}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
