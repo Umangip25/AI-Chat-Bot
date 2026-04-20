@@ -6,7 +6,7 @@ export type UploadedFile = {
   name: string;
   type: "pdf" | "docx" | "image";
   content: string; // extracted text or base64
-  mimeType: string;
+  mimeType?: string;
 };
 
 type Props = {
