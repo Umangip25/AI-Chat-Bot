@@ -16,7 +16,7 @@ function detectIntent(text: string) {
 // Extract city name for weather intent using regex and cleanup
 function extractCity(text: string): string | null {
   const match = text.match(
-    /weather\s+(?:in|at|for)\s+([a-zA-Z\s,]+?)(?:\?|$|\s+right now|\s+currently|\s+now)/i
+    /weather\s+(?:in|at|for)\s+([a-zA-Z\s,]+?)(?:\?|$|\s+right now|\s+currently|\s+now)/i,
   );
   if (match) return match[1].trim();
 
@@ -42,8 +42,8 @@ async function getWeather(city: string) {
   try {
     const res = await fetch(
       `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(
-        city.trim()
-      )}&units=metric&appid=${apiKey}`
+        city.trim(),
+      )}&units=metric&appid=${apiKey}`,
     );
 
     if (!res.ok) {
@@ -70,14 +70,67 @@ async function getWeather(city: string) {
 }
 
 export async function POST(req: Request) {
-  const { messages } = await req.json();
+  const { messages, file } = await req.json();
 
-  const lastMessage =
-    messages[messages.length - 1]?.content?.toString() || "";
+  const lastMessage = messages[messages.length - 1]?.content?.toString() || "";
 
-  // Detect intent and handle accordingly
   const intent = detectIntent(lastMessage);
 
+  // ————— FILE HANDLING —————
+  if (file) {
+    const systemPrompt =
+      "You are a helpful assistant that analyzes documents and images. " +
+      "First provide a clear concise summary, then invite the user to ask questions about it.";
+
+    if (file.type === "image") {
+      // Use gpt-4o for vision — gpt-4o-mini does not support images
+      const result = await streamText({
+        model: openai("gpt-4o"),
+        messages: [
+          { role: "system", content: systemPrompt },
+          {
+            role: "user",
+            content: [
+              {
+                type: "image",
+                image: Buffer.from(file.content, "base64"),
+                mimeType: file.mimeType,
+              },
+              {
+                type: "text",
+                text: lastMessage.includes(`[Attached: ${file.name}]`)
+                  ? "Please summarize this image and describe what you see in detail."
+                  : lastMessage.replace(`\n\n[Attached: ${file.name}]`, "").trim(),
+              },
+            ],
+          },
+        ],
+      });
+
+      return result.toTextStreamResponse();
+    }
+
+    // PDF or DOCX — gpt-4o-mini is fine for text
+    const userQuestion = lastMessage
+      .replace(`[Attached: ${file.name}]`, "")
+      .trim();
+
+    const userContent =
+      `Here is the content of the document "${file.name}":\n\n${file.content}\n\n` +
+      (userQuestion || "Please provide a concise summary of this document.");
+
+    const result = await streamText({
+      model: openai("gpt-4o-mini"),
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userContent },
+      ],
+    });
+
+    return result.toTextStreamResponse();
+  }
+
+  // ————— WEATHER INTENT —————
   if (intent === "weather") {
     const city = extractCity(lastMessage);
 
@@ -113,6 +166,7 @@ export async function POST(req: Request) {
 
       return result.toTextStreamResponse();
     }
+
     // Format the weather data into a user-friendly response
     const formattedContent = [
       `🌤️ ${weather.city} Weather`,
@@ -143,17 +197,13 @@ export async function POST(req: Request) {
       "You are a senior frontend engineer. Write clean JavaScript/React code.";
   }
   if (intent === "advice") {
-    systemPrompt =
-      "You give simple, practical life advice. No long speeches.";
+    systemPrompt = "You give simple, practical life advice. No long speeches.";
   }
 
   // For general intent, the default system prompt is used.
   const result = await streamText({
     model: openai("gpt-4o-mini"),
-    messages: [
-      { role: "system", content: systemPrompt },
-      ...messages,
-    ],
+    messages: [{ role: "system", content: systemPrompt }, ...messages],
   });
 
   return result.toTextStreamResponse();

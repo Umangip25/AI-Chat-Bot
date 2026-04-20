@@ -9,6 +9,7 @@ import Sidebar from "./components/SideBar";
 import LimitBanner from "./components/LimitBanner";
 import { ThemeProvider } from "./lib/ThemeContext";
 import ThemeToggle from "./components/ThemeToggle";
+import FileUpload, { type UploadedFile } from "./components/FileUploads";
 
 function AppShell() {
   const {
@@ -29,6 +30,7 @@ function AppShell() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [chatLimitReached, setChatLimitReached] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [uploadedFile, setUploadedFile] = useState<UploadedFile | null>(null);
 
   const focusInput = () => {
     requestAnimationFrame(() => inputRef.current?.focus());
@@ -57,11 +59,17 @@ function AppShell() {
     };
 
     checkLimits();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentChatId, messages]);
 
   const sendMessage = async () => {
-    if (!input.trim() || isLoading || isLimited || chatLimitReached) return;
+    if (!input.trim() && !uploadedFile || isLoading || isLimited || chatLimitReached) return;
+
+    const messageContent = uploadedFile
+      ? input.trim()
+        ? `${input.trim()}\n\n[Attached: ${uploadedFile.name}]`
+        : `[Attached: ${uploadedFile.name}]`
+      : input.trim();
 
     const userMessages = messages.filter((m) => m.role === "user");
     if (userMessages.length >= MAX_MESSAGES) {
@@ -72,7 +80,7 @@ function AppShell() {
       return;
     }
 
-    const userMessage: Message = { role: "user", content: input };
+    const userMessage: Message = { role: "user", content: messageContent };
     const updatedMessages = [...messages, userMessage];
 
     addMessage(userMessage);
@@ -83,7 +91,7 @@ function AppShell() {
 
     const res = await fetch("/api/chat", {
       method: "POST",
-      body: JSON.stringify({ messages: updatedMessages }),
+      body: JSON.stringify({ messages: updatedMessages, file: uploadedFile }),
     });
 
     const reader = res.body?.getReader();
@@ -136,6 +144,7 @@ function AppShell() {
     setMessages(finalMessages);
     setIsLoading(false);
     focusInput();
+    setUploadedFile(null);
   };
 
   return (
@@ -183,45 +192,74 @@ function AppShell() {
             cooldownRemaining={cooldownRemaining}
             chatLimitReached={chatLimitReached}
           />
-
           {/* Input bar */}
           <div
-            className="px-3 py-3 sm:px-4 flex gap-2 shrink-0"
+            className="px-3 py-3 sm:px-4 flex flex-col gap-2 shrink-0"
             style={{
               background: "var(--topbar-bg)",
               borderTop: "1px solid var(--topbar-border)",
             }}
           >
-            <input
-              ref={inputRef}
-              className="flex-1 rounded-full px-4 py-2 text-sm outline-none transition-colors min-w-0"
-              style={{
-                background: "var(--bg-input)",
-                color: "var(--text-primary)",
-                border: "1px solid var(--border)",
-                opacity: isLimited || chatLimitReached ? 0.5 : 1,
-              }}
-              placeholder={
-                isLimited
-                  ? "Wait for cooldown to end…"
-                  : chatLimitReached
-                  ? "Delete a chat to continue…"
-                  : "Type a message…"
-              }
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-              disabled={isLoading || isLimited || chatLimitReached}
-            />
+            {/* File preview */}
+            {uploadedFile && (
+              <div
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs w-fit"
+                style={{
+                  background: "var(--bg-input)",
+                  border: "1px solid var(--border)",
+                  color: "var(--text-secondary)",
+                }}
+              >
+                <span>
+                  {uploadedFile.type === "image" ? "🖼️" : "📄"} {uploadedFile.name}
+                </span>
+                <button
+                  onClick={() => setUploadedFile(null)}
+                  className="hover:opacity-70"
+                  style={{ color: "var(--danger)" }}
+                >
+                  ✕
+                </button>
+              </div>
+            )}
 
-            <button
-              onClick={sendMessage}
-              disabled={isLoading || isLimited || chatLimitReached}
-              className="shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-opacity disabled:opacity-40"
-              style={{ background: "var(--accent)", color: "#fff" }}
-            >
-              {isLoading ? "…" : "Send"}
-            </button>
+            {/* Input row */}
+            <div className="flex gap-2">
+              <FileUpload onFileReady={(file) => setUploadedFile(file)} />
+
+              <input
+                ref={inputRef}
+                className="flex-1 rounded-full px-4 py-2 text-sm outline-none transition-colors min-w-0"
+                style={{
+                  background: "var(--bg-input)",
+                  color: "var(--text-primary)",
+                  border: "1px solid var(--border)",
+                  opacity: isLimited || chatLimitReached ? 0.5 : 1,
+                }}
+                placeholder={
+                  uploadedFile
+                    ? "Ask something about the file..."
+                    : isLimited
+                      ? "Wait for cooldown to end…"
+                      : chatLimitReached
+                        ? "Delete a chat to continue…"
+                        : "Type a message…"
+                }
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                disabled={isLoading || isLimited || chatLimitReached}
+              />
+
+              <button
+                onClick={sendMessage}
+                disabled={isLoading || isLimited || chatLimitReached}
+                className="shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-opacity disabled:opacity-40"
+                style={{ background: "var(--accent)", color: "#fff" }}
+              >
+                {isLoading ? "…" : "Send"}
+              </button>
+            </div>
           </div>
         </div>
       </div>
