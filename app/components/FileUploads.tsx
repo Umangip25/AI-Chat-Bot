@@ -34,7 +34,7 @@ export default function FileUpload({ onFileReady }: Props) {
           name: file.name,
           type: "image",
           content: base64,
-          mimeType: file.type,
+          
         });
         return;
       }
