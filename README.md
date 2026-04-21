@@ -1,4 +1,4 @@
-# 🤖 AI Chat App (Next.js + OpenAI)
+# 🤖 UmindBot — AI Chat Application (Next.js + OpenAI)
 
 A full-stack AI chat application built with **Next.js App Router**, **OpenAI GPT-4o-mini**, **Zustand**, and **IndexedDB (Dexie)**.
 It supports real-time streaming chat, multi-session conversations, persistent storage, math rendering, and built-in AI tools like weather, jokes, math, coding help, and general assistance.

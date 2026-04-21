@@ -167,6 +167,14 @@ function AppShell() {
         >
           ☰
         </button>
+        {/* App name - centered */}
+        <span
+          className="absolute left-1/2 -translate-x-1/2 text-sm font-semibold tracking-wide"
+          style={{ color: "var(--text-primary)" }}
+        >
+          UmindBot
+        </span>
+
         <ThemeToggle />
       </div>
 
