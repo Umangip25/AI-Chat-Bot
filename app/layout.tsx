@@ -18,8 +18,8 @@ const geistMono = Geist_Mono({
 
 //  Global metadata for the app
 export const metadata: Metadata = {
-  title: "Auriq AI",
-  description: "Auriq AI — Your intelligent AI assistant. Chat, analyze documents, get weather, solve math and more.",
+  title: "AuriQ AI",
+  description: "AuriQ AI — Your intelligent AI assistant. Chat, analyze documents, get weather, solve math and more.",
 };
 
 // Main layout component that wraps all pages
